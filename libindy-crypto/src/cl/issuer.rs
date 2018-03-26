@@ -151,8 +151,7 @@ impl Issuer {
         Ok(res)
     }
 
-    // TODO: Fixme; This should ideally be private, but making it public temporarily
-    pub fn _generate_primary_credential(prover_id: &str,
+    fn _generate_primary_credential(prover_id: &str,
                                         blinded_credential_secrets: &BlindedCredentialSecrets,
                                         blinded_credential_secrets_correctness_proof: Option<&BlindedCredentialSecretsCorrectnessProof>,
                                         credential_nonce: Option<&Nonce>,
@@ -771,8 +770,7 @@ impl Issuer {
     }
 
     // In the anoncreds whitepaper, `credential context` is denoted by `m2`
-    // TODO: Fixme; This should ideally be private, but making it public temporarily
-    pub fn _gen_credential_context(prover_id: &str, rev_idx: Option<u32>) -> Result<BigNumber, IndyCryptoError> {
+    fn _gen_credential_context(prover_id: &str, rev_idx: Option<u32>) -> Result<BigNumber, IndyCryptoError> {
         trace!("Issuer::_calc_m2: >>> prover_id: {:?}, rev_idx: {:?}", prover_id, rev_idx);
 
         let rev_idx = rev_idx.map(|i| i as i32).unwrap_or(-1);

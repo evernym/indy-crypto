@@ -359,8 +359,7 @@ impl Prover {
         Ok(())
     }
 
-    // TODO: Fixme; This should be private, making it public temporarily
-    pub fn _generate_primary_blinded_credential_secrets(
+    fn _generate_primary_blinded_credential_secrets(
         p_pub_key: &CredentialPrimaryPublicKey,
         credential_values: &CredentialValues,
     ) -> Result<PrimaryBlindedCredentialSecretsFactors, IndyCryptoError> {
@@ -847,7 +846,7 @@ impl Prover {
 
 #[derive(Debug)]
 pub struct ProofBuilder<'a> {
-    pub authz_proof_init: Option<AuthzProofInit<'a>>,
+    authz_proof_init: Option<AuthzProofInit<'a>>,
     common_attributes: BTreeMap<String, BigNumber>,
     init_proofs: BTreeMap<String, InitProof>,
     c_list: Vec<Vec<u8>>,
@@ -1147,8 +1146,7 @@ impl<'a> ProofBuilder<'a> {
         Ok(proof)
     }
 
-    // TODO: Fixme; This method should be private
-    pub fn add_sub_proof_request_primary(
+    fn add_sub_proof_request_primary(
         &mut self,
         primary_public_key: &CredentialPrimaryPublicKey,
         primary_credential: &PrimaryCredentialSignature,
@@ -1177,8 +1175,7 @@ impl<'a> ProofBuilder<'a> {
         Ok(primary_init_proof)
     }
 
-    // TODO: Fixme; This method should be private
-    pub fn add_sub_proof_request_revocation(
+    fn add_sub_proof_request_revocation(
         &mut self,
         revocation_credential: &NonRevocationCredentialSignature,
         rev_reg: &RevocationRegistry,
@@ -1719,8 +1716,7 @@ impl<'a> ProofBuilder<'a> {
         Ok(primary_predicate_ge_proof)
     }
 
-    // TODO: Fixme; Needs to be private
-    pub fn _finalize_primary_proof(
+    fn _finalize_primary_proof(
         init_proof: &PrimaryInitProof,
         challenge: &BigNumber,
         cred_schema: &CredentialSchema,

@@ -349,8 +349,7 @@ impl ProofVerifier {
         Ok(())
     }
 
-    // TODO: Fixme; This method should be private
-    pub fn _verify_primary_proof(
+    fn _verify_primary_proof(
         p_pub_key: &CredentialPrimaryPublicKey,
         c_hash: &BigNumber,
         primary_proof: &PrimaryProof,

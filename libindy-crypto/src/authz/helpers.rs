@@ -203,7 +203,6 @@ mod tests {
                                                         &mod_2, &mut ctx).unwrap();
         assert!(comm.is_prime(Some(&mut ctx)).unwrap());
         assert!(r_0 < BigNumber::from_dec(P_3).unwrap().rshift(3).unwrap());
-//        println!("Comm {:?} {:?}", BigNumber::to_dec(&comm), BigNumber::to_dec(&policy_address));
     }
 
     #[test]

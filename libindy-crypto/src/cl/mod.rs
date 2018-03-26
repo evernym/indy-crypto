@@ -32,7 +32,7 @@ pub fn new_nonce() -> Result<Nonce, IndyCryptoError> {
 /// A list of attributes a Claim is based on.
 #[derive(Debug, Clone)]
 pub struct CredentialSchema {
-    pub attrs: BTreeSet<String>, /* attr names */
+    attrs: BTreeSet<String>, /* attr names */
 }
 
 /// A Builder of `Claim Schema`.
@@ -58,7 +58,7 @@ impl CredentialSchemaBuilder {
 
 #[derive(Debug, Clone)]
 pub struct NonCredentialSchemaElements {
-    pub attrs: BTreeSet<String>,
+    attrs: BTreeSet<String>,
 }
 
 #[derive(Debug)]
@@ -584,8 +584,8 @@ impl SimpleTailsAccessor {
 /// Issuer's signature over Claim attribute values.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialSignature {
-    pub p_credential: PrimaryCredentialSignature,
-    pub r_credential: Option<NonRevocationCredentialSignature>, /* will be used to proof is credential revoked preparation */
+    p_credential: PrimaryCredentialSignature,
+    r_credential: Option<NonRevocationCredentialSignature>, /* will be used to proof is credential revoked preparation */
 }
 
 impl CredentialSignature {

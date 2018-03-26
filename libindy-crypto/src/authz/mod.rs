@@ -935,15 +935,15 @@ impl<'a> JsonDecodable<'a> for AuthzProofCommitments {}
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub struct AuthzProofFactors {
-    pub agent_secret: BigNumber,
-    pub policy_address: BigNumber,
-    pub r: BigNumber,
-    pub r_prime: BigNumber,
-    pub K: BigNumber,               //Commitment_p1(g1^agent_secret, h1^r)
-    pub P: BigNumber,               //Commitment_p2(g2^K, h2^policy_address, k2^r_prime)
-    pub policy_address_attr_name: String,
-    pub provisioned_witness: BigNumber,
-    pub revocation_witness: BigNumber,
+    agent_secret: BigNumber,
+    policy_address: BigNumber,
+    r: BigNumber,
+    r_prime: BigNumber,
+    K: BigNumber,               //Commitment_p1(g1^agent_secret, h1^r)
+    P: BigNumber,               //Commitment_p2(g2^K, h2^policy_address, k2^r_prime)
+    policy_address_attr_name: String,
+    provisioned_witness: BigNumber,
+    revocation_witness: BigNumber,
 }
 
 impl AuthzProofFactors {
@@ -1100,8 +1100,8 @@ impl AuthzProofGenerators {
 
 #[derive(Debug)]
 pub struct AuthzAccumulators {
-    pub provisioned: BigNumber,
-    pub revoked: BigNumber
+    provisioned: BigNumber,
+    revoked: BigNumber
 }
 
 fn clone_bignum_hashmap<K: Clone + Eq + Hash>(other: &HashMap<K, BigNumber>)
