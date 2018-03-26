@@ -151,7 +151,7 @@ impl<'a> JsonDecodable<'a> for CredentialValue {}
 /// Values of attributes from `Claim Schema` (must be integers).
 #[derive(Debug)]
 pub struct CredentialValues {
-    pub attrs_values: BTreeMap<String, CredentialValue>,
+    attrs_values: BTreeMap<String, CredentialValue>,
 }
 
 impl CredentialValues {
@@ -602,10 +602,10 @@ impl<'a> JsonDecodable<'a> for CredentialSignature {}
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PrimaryCredentialSignature {
-    pub m_2: BigNumber,
-    pub a: BigNumber,
-    pub e: BigNumber,
-    pub v: BigNumber,
+    m_2: BigNumber,
+    a: BigNumber,
+    e: BigNumber,
+    v: BigNumber,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
