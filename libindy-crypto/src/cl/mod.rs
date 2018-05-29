@@ -12,7 +12,7 @@ use errors::IndyCryptoError;
 use pair::*;
 use utils::json::{JsonEncodable, JsonDecodable};
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 /// Creates random nonce
@@ -27,13 +27,13 @@ pub fn new_nonce() -> Result<Nonce, IndyCryptoError> {
     Ok(helpers::bn_rand(constants::LARGE_NONCE)?)
 }
 
-/// A list of attributes a Claim is based on.
+/// A list of attributes a Credential is based on.
 #[derive(Debug, Clone)]
 pub struct CredentialSchema {
     attrs: HashSet<String> /* attr names */
 }
 
-/// A Builder of `Claim Schema`.
+/// A Builder of `Credential Schema`.
 #[derive(Debug)]
 pub struct CredentialSchemaBuilder {
     attrs: HashSet<String> /* attr names */
@@ -58,7 +58,7 @@ impl CredentialSchemaBuilder {
     }
 }
 
-/// Values of attributes from `Claim Schema` (must be integers).
+/// Values of attributes from `Credential Schema` (must be integers).
 #[derive(Debug)]
 pub struct CredentialValues {
     attrs_values: HashMap<String, BigNumber>
@@ -72,7 +72,7 @@ impl CredentialValues {
     }
 }
 
-/// A Builder of `Claim Values`.
+/// A Builder of `Credential Values`.
 #[derive(Debug)]
 pub struct CredentialValuesBuilder {
     attrs_values: HashMap<String, BigNumber> /* attr_name -> int representation of value */
@@ -147,13 +147,13 @@ impl JsonEncodable for CredentialPrivateKey {}
 
 impl<'a> JsonDecodable<'a> for CredentialPrivateKey {}
 
-/// Issuer's "Public Key" is used to verify the Issuer's signature over the Claim's attributes' values (primary credential).
+/// Issuer's "Public Key" is used to verify the Issuer's signature over the Credential's attributes' values (primary credential).
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct CredentialPrimaryPublicKey {
     n: BigNumber,
     s: BigNumber,
     rms: BigNumber,
-    r: BTreeMap<String /* attr_name */, BigNumber>,
+    r: HashMap<String /* attr_name */, BigNumber>,
     rctxt: BigNumber,
     z: BigNumber
 }
@@ -164,14 +164,14 @@ impl CredentialPrimaryPublicKey {
             n: self.n.clone()?,
             s: self.s.clone()?,
             rms: self.rms.clone()?,
-            r: clone_btree_bignum_map(&self.r)?,
+            r: clone_bignum_map(&self.r)?,
             rctxt: self.rctxt.clone()?,
             z: self.z.clone()?
         })
     }
 }
 
-/// Issuer's "Private Key" used for signing Claim's attributes' values (primary credential)
+/// Issuer's "Private Key" used for signing Credential's attributes' values (primary credential)
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct CredentialPrimaryPrivateKey {
     p: BigNumber,
@@ -182,7 +182,7 @@ pub struct CredentialPrimaryPrivateKey {
 #[derive(Debug)]
 pub struct CredentialPrimaryPublicKeyMetadata {
     xz: BigNumber,
-    xr: BTreeMap<String, BigNumber>
+    xr: HashMap<String, BigNumber>
 }
 
 /// Proof of `Issuer Public Key` correctness
@@ -190,7 +190,7 @@ pub struct CredentialPrimaryPublicKeyMetadata {
 pub struct CredentialKeyCorrectnessProof {
     c: BigNumber,
     xz_cap: BigNumber,
-    xr_cap: BTreeMap<String, BigNumber>
+    xr_cap: Vec<(String, BigNumber)>,
 }
 
 impl JsonEncodable for CredentialKeyCorrectnessProof {}
@@ -213,7 +213,7 @@ pub struct CredentialRevocationPublicKey {
     y: PointG2,
 }
 
-/// `Revocation Private Key` is used for signing Claim.
+/// `Revocation Private Key` is used for signing Credential.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialRevocationPrivateKey {
     x: GroupOrderElement,
@@ -224,7 +224,7 @@ pub type Accumulator = PointG2;
 
 /// `Revocation Registry` contains accumulator.
 /// Must be published by Issuer on a tamper-evident and highly available storage
-/// Used by prover to prove that a claim hasn't revoked by the issuer
+/// Used by prover to prove that a credential hasn't revoked by the issuer
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RevocationRegistry {
     accum: Accumulator
@@ -245,7 +245,9 @@ impl<'a> JsonDecodable<'a> for RevocationRegistry {}
 /// `Revocation Registry Delta` contains Accumulator changes.
 /// Must be applied to `Revocation Registry`
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDelta {
+    #[serde(skip_serializing_if = "Option::is_none")]
     prev_accum: Option<Accumulator>,
     accum: Accumulator,
     #[serde(skip_serializing_if = "HashSet::is_empty")]
@@ -261,12 +263,23 @@ impl JsonEncodable for RevocationRegistryDelta {}
 impl<'a> JsonDecodable<'a> for RevocationRegistryDelta {}
 
 impl RevocationRegistryDelta {
+    pub fn from_parts(rev_reg_from: Option<&RevocationRegistry>,
+                      rev_reg_to: &RevocationRegistry,
+                      issued: &HashSet<u32>,
+                      revoked: &HashSet<u32>) -> RevocationRegistryDelta {
+        RevocationRegistryDelta {
+            prev_accum: rev_reg_from.map(|rev_reg| rev_reg.accum),
+            accum: rev_reg_to.accum.clone(),
+            issued: issued.clone(),
+            revoked: revoked.clone()
+        }
+    }
+
     pub fn merge(&mut self, other_delta: &RevocationRegistryDelta) -> Result<(), IndyCryptoError> {
         if other_delta.prev_accum.is_none() || self.accum != other_delta.prev_accum.unwrap() {
             return Err(IndyCryptoError::InvalidStructure(format!("Deltas can not be merged.")));
         }
 
-        self.prev_accum = Some(self.accum);
         self.accum = other_delta.accum;
 
         self.issued.extend(
@@ -389,7 +402,7 @@ impl SimpleTailsAccessor {
 }
 
 
-/// Issuer's signature over Claim attribute values.
+/// Issuer's signature over Credential attribute values.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialSignature {
     p_credential: PrimaryCredentialSignature,
@@ -449,16 +462,23 @@ impl<'a> JsonDecodable<'a> for Witness {}
 impl Witness {
     pub fn new<RTA>(rev_idx: u32,
                     max_cred_num: u32,
+                    issuance_by_default: bool,
                     rev_reg_delta: &RevocationRegistryDelta,
                     rev_tails_accessor: &RTA) -> Result<Witness, IndyCryptoError> where RTA: RevocationTailsAccessor {
-        trace!("Witness::new: >>> rev_idx: {:?}, max_cred_num: {:?}, rev_reg_delta: {:?}",
-               rev_idx, max_cred_num, rev_reg_delta);
+        trace!("Witness::new: >>> rev_idx: {:?}, max_cred_num: {:?}, issuance_by_default: {:?}, rev_reg_delta: {:?}",
+               rev_idx, max_cred_num, issuance_by_default, rev_reg_delta);
 
         let mut omega = PointG2::new_inf()?;
 
-        let mut issued = rev_reg_delta.issued.clone();
-        issued.remove(&rev_idx);
+        let mut issued = if issuance_by_default {
+            (1..max_cred_num + 1).collect::<HashSet<u32>>()
+                .difference(&rev_reg_delta.revoked).cloned().collect::<HashSet<u32>>()
+        } else {
+            rev_reg_delta.issued.clone()
+        };
 
+        issued.remove(&rev_idx);
+        
         for j in issued.iter() {
             let index = max_cred_num + 1 - j + rev_idx;
             rev_tails_accessor.access_tail(index, &mut |tail| {
@@ -653,8 +673,8 @@ pub enum PredicateType {
 
 /// Proof is complex crypto structure created by prover over multiple credentials that allows to prove that prover:
 /// 1) Knows signature over credentials issued with specific issuer keys (identified by key id)
-/// 2) Claim contains attributes with specific values that prover wants to disclose
-/// 3) Claim contains attributes with valid predicates that verifier wants the prover to satisfy.
+/// 2) Credential contains attributes with specific values that prover wants to disclose
+/// 3) Credential contains attributes with valid predicates that verifier wants the prover to satisfy.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Proof {
     proofs: Vec<SubProof>,
@@ -958,15 +978,6 @@ fn clone_bignum_map<K: Clone + Eq + Hash>(other: &HashMap<K, BigNumber>)
     Ok(res)
 }
 
-fn clone_btree_bignum_map<K: Clone + Eq + Hash + Ord>(other: &BTreeMap<K, BigNumber>)
-                                                      -> Result<BTreeMap<K, BigNumber>, IndyCryptoError> {
-    let mut res: BTreeMap<K, BigNumber> = BTreeMap::new();
-    for (k, v) in other {
-        res.insert(k.clone(), v.clone()?);
-    }
-    Ok(res)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1103,7 +1114,7 @@ mod test {
                                                &rev_key_priv,
                                                &simple_tail_accessor).unwrap();
 
-        let witness = Witness::new(rev_idx, max_cred_num, &rev_reg_delta.unwrap(), &simple_tail_accessor).unwrap();
+        let witness = Witness::new(rev_idx, max_cred_num, issuance_by_default, &rev_reg_delta.unwrap(), &simple_tail_accessor).unwrap();
 
         Prover::process_credential_signature(&mut cred_signature,
                                              &cred_values,

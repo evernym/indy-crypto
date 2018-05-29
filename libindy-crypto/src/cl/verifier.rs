@@ -1,6 +1,6 @@
 use bn::BigNumber;
 use cl::*;
-use cl::constants::{LARGE_E_START, ITERATION};
+use cl::constants::{LARGE_E_START_VALUE, ITERATION};
 use cl::helpers::*;
 use errors::IndyCryptoError;
 
@@ -238,7 +238,7 @@ impl ProofVerifier {
         trace!("ProofVerifier::_check_add_sub_proof_request_params_consistency: >>> sub_proof_request: {:?}, cred_schema: {:?}", sub_proof_request, cred_schema);
 
         if sub_proof_request.revealed_attrs.difference(&cred_schema.attrs).count() != 0 {
-            return Err(IndyCryptoError::InvalidStructure(format!("Claim doesn't contain requested attribute")));
+            return Err(IndyCryptoError::InvalidStructure(format!("Credential doesn't contain requested attribute")));
         }
 
         let predicates_attrs =
@@ -247,7 +247,7 @@ impl ProofVerifier {
                 .collect::<HashSet<String>>();
 
         if predicates_attrs.difference(&cred_schema.attrs).count() != 0 {
-            return Err(IndyCryptoError::InvalidStructure(format!("Claim doesn't contain attribute requested in predicate")));
+            return Err(IndyCryptoError::InvalidStructure(format!("Credential doesn't contain attribute requested in predicate")));
         }
 
         trace!("ProofVerifier::_check_add_sub_proof_request_params_consistency: <<<");
@@ -326,14 +326,7 @@ impl ProofVerifier {
 
         let mut ctx = BigNumber::new_context()?;
 
-        let degree: BigNumber =
-            BigNumber::from_dec("2")?
-                .exp(
-                    &BigNumber::from_dec(&LARGE_E_START.to_string())?,
-                    Some(&mut ctx)
-                )?;
-
-        let mut rar = proof.a_prime.mod_exp(&degree, &p_pub_key.n, Some(&mut ctx))?;
+        let mut rar = proof.a_prime.mod_exp(&LARGE_E_START_VALUE, &p_pub_key.n, Some(&mut ctx))?;
 
         for (attr, encoded_value) in &proof.revealed_attrs {
             let cur_r = p_pub_key.r.get(attr)
